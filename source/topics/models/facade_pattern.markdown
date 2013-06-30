@@ -307,6 +307,61 @@ What does that method have to do with `Article`? Little. It is conceptually a pa
 
 Even though the page works, some specs are now breaking due to the refactoring. Create a `dashboard_spec.rb`, move the problem specs over there, and rework them to match the new structures.
 
+### Note on Testing Dashboard
+
+One advantage of using the Facade pattern here is that we can test Dashboard in isolation! We have a ``articles`` method in Dashboard instead of ``Article.for_dashboard`` that we were using before:
+
+```ruby
+  def articles
+    Article.order('created_at DESC').limit(5)
+  end
+```
+
+Now we can write a test for this in our dashboard_spec and we stub ``Article`` related parts of the code since we care about ``Dashboard`` in this test (isolated):
+
+```ruby
+    it "gives the last five articles" do
+      articles = [stub(title: "Foo"), stub, stub, stub, stub]
+      relation = stub(limit: articles)
+      Article.stub(order: relation)
+      
+      dashboard.articles.count.should == 5
+      dashboard.articles.first.title.should == "Foo"
+    end
+```
+
+When you look at this test you can see that we had to do a nested stubbing! When you have to do nested stubbing in your test it's usually a bad sign!
+It means you know too much detail about that piece of code. For instance here, we know that when we call ``Article.order`` method it will return something that 
+we can call ``limit`` on it. That is the violation of **Law of Demeter**! This part is a detail that needs to be hidden behind ``Article`` model where it actually belongs. So 
+we define a method in ``Article`` as following and use that in the ``articles`` method in ``Dashboard``:
+
+```ruby
+  # in Article
+  def self.last_five
+    order('created_at DESC').limit(5)
+  end
+  
+  # in Dashboard
+  def articles
+    Article.last_five
+  end
+```
+
+Now lets write our test for ``dashboard.articles`` again:
+
+```ruby
+  it "gives the last five articles" do
+    artilces = [stub(title: "Foo"), stub, stub, stub, stub]
+    Article.stub(last_five: articles)
+    last_five = dashboard.articles
+    
+    last_five.count.should == 5
+    last_five.first.title.should == "Foo"
+  end
+```
+
+It became much simpler and it needs less knowledge than before and there is no nested stubbign anymore. Usually in programming it's better for each piece of code to know **THE LEAST** about other parts.
+
 ### Going Further
 
 Now that you have a facade encapsulating all the logic, some things you might try:
