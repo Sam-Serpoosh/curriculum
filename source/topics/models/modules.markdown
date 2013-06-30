@@ -309,7 +309,7 @@ end
 ```
 
 <div class="note">
-<p>Not familiar with <code>.send</code>? It allows us to trigger a private method inside another object. If we just called <code>including_class.extend</code> here, Ruby would complain. But <code>send</code> will work just fine.</p>
+<p>Not familiar with <code>.send</code>? It allows us to trigger a private method inside another object. If we just called <code>including_class.has_one</code> here, Ruby would complain. But <code>send</code> will work just fine.</p>
 </div>
 
 The `send` call is tricky to write, though. Whenever Ruby feels tricky, there must be another way.
